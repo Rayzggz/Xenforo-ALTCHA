@@ -1,0 +1,13 @@
+<xf:js>
+  (async()=>{ await import('https://static.cloudflare.ltd/altcha/altcha.min.js'); })();
+</xf:js>
+<xf:js src="https://static.cloudflare.ltd/altcha/language.js" />
+<altcha-widget
+                id="altcha-captcha-widget"
+            challengejson='{$challenge}'
+            auto="onload"
+            hidefooter
+            hidelogo
+            refetchonexpire
+            delay="1000"
+        ></altcha-widget>

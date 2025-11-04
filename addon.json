@@ -1,0 +1,15 @@
+{
+    "legacy_addon_id": "",
+    "title": "[Roi] ALTACHA CAPTCHA",
+    "description": "",
+    "version_id": 1000070,
+    "version_string": "1.0.0",
+    "dev": "Roi Feng @Rayzggz",
+    "dev_url": "https://roi.moe/",
+    "faq_url": "https://roi.moe/",
+    "support_url": "https://roi.moe/",
+    "extra_urls": [],
+    "require": [],
+    "icon": "fa-robot",
+    "composer_autoload": "vendor/composer"
+}
