@@ -1,6 +1,11 @@
 # ALTCHA for XenForo
 A XenForo add-on that integrates the [ALTCHA](https://altcha.org/) human verification system, providing a modern, privacy-friendly CAPTCHA alternative that offers better protection against bots with a smooth user experience.
 
+# 🚀 Installation
+Download and install the add-on from the XenForo Resource page:
+[https://xenforo.com/community/resources/roi-altacha-captcha.10127/](https://xenforo.com/community/resources/roi-altacha-captcha.10127/)
+
+
 # 🧩 Notes
 This add-on uses ALTCHA Server Integration with the “Verifying without Sentinel” mode.
 Thanks to this, it works completely independently and it is completely free to use.
