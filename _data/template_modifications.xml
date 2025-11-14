@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<template_modifications>
+  <modification type="admin" template="option_template_captcha" modification_key="roi_altchacaptcha_template_captcha" execution_order="10" enabled="1" action="str_replace">
+    <find><![CDATA[<!--[XF:captcha_after_none]-->]]></find>
+    <replace><![CDATA[$0
+
+<xf:option value="Roi\ALTCHACAPTCHA:ALTCHACAPTCHA" data-hide="true">
+	<xf:label>ALTCHA CAPTCHA</xf:label>
+	<xf:hint>{{ phrase('roi_altchacaptcha_config_hint') }}</xf:hint>
+	<xf:dependent>
+		<div>{{ phrase('secret_key:') }}</div>
+		<xf:textbox name="{$extraKeysInput}[altchaHmacKey]" value="{$xf.options.extraCaptchaKeys.altchaHmacKey}" />
+	</xf:dependent>
+	<xf:dependent>
+		<div>{{ phrase('roi_altchacaptcha_complexity:') }}</div>
+		<xf:textbox name="{$extraKeysInput}[altchacomplexity]" value="{$xf.options.extraCaptchaKeys.altchacomplexity}" />
+	</xf:dependent>
+	<xf:dependent>
+		<div>{{ phrase('roi_altchacaptcha_JS_URL:') }}</div>
+		<xf:textbox name="{$extraKeysInput}[altchajsurl]" value="{$xf.options.extraCaptchaKeys.altchajsurl}" />
+	</xf:dependent>
+	<xf:dependent>
+		<div>{{ phrase('roi_altchacaptcha_i18n_JS_URL:') }}</div>
+		<xf:textbox name="{$extraKeysInput}[altchai18njsurl]" value="{$xf.options.extraCaptchaKeys.altchai18njsurl}" />
+	</xf:dependent>
+</xf:option>
+
+<!--[XF:captcha_after_altchacaptcha]-->]]></replace>
+  </modification>
+</template_modifications>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<phrases>
+  <phrase title="roi_altchacaptcha_JS_URL" version_id="1000070" version_string="1.0.0"><![CDATA[ALTCHA Script URL]]></phrase>
+  <phrase title="roi_altchacaptcha_complexity" version_id="1000070" version_string="1.0.0"><![CDATA[Complexity (the maximum random number)]]></phrase>
+  <phrase title="roi_altchacaptcha_config_hint" version_id="1000070" version_string="1.0.0"><![CDATA[<a href="https://altcha.org/" target="_blank">https://altcha.org/</a><br /> 
+The ALTCHA Script URL is optional, and the default uses the official jsdelivr URL. <br />
+Complexity is the maximum random number. For details, please refer to the official documentation.
+ ]]></phrase>
+  <phrase title="roi_altchacaptcha_i18n_JS_URL" version_id="1000070" version_string="1.0.0"><![CDATA[i18n JS URL]]></phrase>
+</phrases>

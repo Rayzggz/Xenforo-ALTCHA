@@ -1,0 +1,26 @@
+{
+    "roi_altchacaptcha_JS_URL.txt": {
+        "global_cache": false,
+        "version_id": 1000070,
+        "version_string": "1.0.0",
+        "hash": "d4e0a344dd834686c9e1c9f6ef9a4ba0"
+    },
+    "roi_altchacaptcha_complexity.txt": {
+        "global_cache": false,
+        "version_id": 1000070,
+        "version_string": "1.0.0",
+        "hash": "93a3ecd6e6dbb6f8dac4e09ed1fb6fad"
+    },
+    "roi_altchacaptcha_config_hint.txt": {
+        "global_cache": false,
+        "version_id": 1000070,
+        "version_string": "1.0.0",
+        "hash": "fe921010f995a33ea145b686722d82c4"
+    },
+    "roi_altchacaptcha_i18n_JS_URL.txt": {
+        "global_cache": false,
+        "version_id": 1000070,
+        "version_string": "1.0.0",
+        "hash": "ddd1aa7403f797d8a692719baa66e50c"
+    }
+}

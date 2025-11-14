@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<templates>
+  <template type="public" title="roi_altchacaptcha_captcha" version_id="1000070" version_string="1.0.0"><![CDATA[<xf:js>
+  (async()=>{ await import('{$altchajsurl}'); })();
+</xf:js>
+<xf:if is="$altchai18njsurl">
+    <xf:js src="{$altchai18njsurl}" />
+</xf:if>
+<altcha-widget
+                id="altcha-captcha-widget"
+            challengejson='{$challenge}'
+            auto="onload"
+            hidefooter
+            hidelogo
+            refetchonexpire
+            delay="1000"
+        ></altcha-widget>]]></template>
+</templates>
