@@ -1,14 +1,16 @@
 {
     "legacy_addon_id": "",
     "title": "[Roi] ALTACHA CAPTCHA",
-    "description": "",
-    "version_id": 1000070,
-    "version_string": "1.0.0",
+    "description": "ALTACHA for Xenforo",
+    "version_id": 1010070,
+    "version_string": "1.1.0",
     "dev": "Roi Feng @Rayzggz",
     "dev_url": "https://roi.moe/",
-    "faq_url": "https://roi.moe/",
-    "support_url": "https://roi.moe/",
-    "extra_urls": [],
+    "faq_url": "",
+    "support_url": "https://xenforo.com/community/direct-messages/add?to=Rayzggz",
+    "extra_urls": {
+      "Github Repository" : "https://github.com/Rayzggz/Xenforo-ALTCHA"
+    },
     "require": [],
     "icon": "fa-robot",
     "composer_autoload": "vendor/composer"

@@ -17,6 +17,12 @@ class ALTCHACAPTCHA extends AbstractCaptcha
      * @var null|string
      */
     protected $altchaHmacKey = null;
+
+    protected $altchajsurl = "https://cdn.jsdelivr.net/gh/altcha-org/altcha/dist/altcha.min.js";
+
+    protected $altchai18njsurl = null;
+
+    protected $altchacomplexity = 1000000;
     public function __construct(App $app)
     {
         parent::__construct($app);
@@ -24,6 +30,18 @@ class ALTCHACAPTCHA extends AbstractCaptcha
         if (!empty($extraKeys['altchaHmacKey']))
         {
             $this->altchaHmacKey = $extraKeys['altchaHmacKey'];
+        }
+
+        if (!empty($extraKeys['altchajsurl'])) {
+            $this->altchajsurl = $extraKeys['altchajsurl'];
+        }
+
+        if (!empty($extraKeys['altchacomplexity'])) {
+            $this->altchacomplexity = $extraKeys['altchacomplexity'];
+        }
+
+        if (!empty($extraKeys['altchai18njsurl'])) {
+            $this->altchai18njsurl = $extraKeys['altchai18njsurl'];
         }
     }
 
@@ -38,7 +56,7 @@ class ALTCHACAPTCHA extends AbstractCaptcha
 
         $options = new ChallengeOptions(
             algorithm: Algorithm::SHA512,
-            maxNumber: 3000000, // the maximum random number
+            maxNumber: $this->altchacomplexity, // the maximum random number
             expires: (new \DateTimeImmutable())->add(new \DateInterval('PT5M')),
             saltLength: 32, // Length of the salt in bytes
         );
@@ -47,6 +65,8 @@ class ALTCHACAPTCHA extends AbstractCaptcha
 
 
         return $templater->renderTemplate('public:roi_altchacaptcha_captcha', [
+            'altchajsurl' => $this->altchajsurl,
+            'altchai18njsurl' => $this->altchai18njsurl,
             'challenge' => $challenge,
         ]);
     }

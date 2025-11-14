@@ -1,7 +1,9 @@
 <xf:js>
-  (async()=>{ await import('https://static.cloudflare.ltd/altcha/altcha.min.js'); })();
+  (async()=>{ await import('{$altchajsurl}'); })();
 </xf:js>
-<xf:js src="https://static.cloudflare.ltd/altcha/language.js" />
+<xf:if is="$altchai18njsurl">
+    <xf:js src="{$altchai18njsurl}" />
+</xf:if>
 <altcha-widget
                 id="altcha-captcha-widget"
             challengejson='{$challenge}'
