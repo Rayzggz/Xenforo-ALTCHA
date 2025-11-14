@@ -1,4 +1,0 @@
-<a href="https://altcha.org/" target="_blank">https://altcha.org/</a><br /> 
-The ALTCHA Script URL is optional, and the default uses the official jsdelivr URL. <br />
-Complexity is the maximum random number. For details, please refer to the official documentation.
- 

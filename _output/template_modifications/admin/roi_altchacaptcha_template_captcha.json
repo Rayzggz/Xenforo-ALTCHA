@@ -1,9 +1,0 @@
-{
-    "template": "option_template_captcha",
-    "description": "",
-    "execution_order": 10,
-    "enabled": true,
-    "action": "str_replace",
-    "find": "<!--[XF:captcha_after_none]-->",
-    "replace": "$0\n\n<xf:option value=\"Roi\\ALTCHACAPTCHA:ALTCHACAPTCHA\" data-hide=\"true\">\n\t<xf:label>ALTCHA CAPTCHA</xf:label>\n\t<xf:hint>{{ phrase('roi_altchacaptcha_config_hint') }}</xf:hint>\n\t<xf:dependent>\n\t\t<div>{{ phrase('secret_key:') }}</div>\n\t\t<xf:textbox name=\"{$extraKeysInput}[altchaHmacKey]\" value=\"{$xf.options.extraCaptchaKeys.altchaHmacKey}\" />\n\t</xf:dependent>\n\t<xf:dependent>\n\t\t<div>{{ phrase('roi_altchacaptcha_complexity:') }}</div>\n\t\t<xf:textbox name=\"{$extraKeysInput}[altchacomplexity]\" value=\"{$xf.options.extraCaptchaKeys.altchacomplexity}\" />\n\t</xf:dependent>\n\t<xf:dependent>\n\t\t<div>{{ phrase('roi_altchacaptcha_JS_URL:') }}</div>\n\t\t<xf:textbox name=\"{$extraKeysInput}[altchajsurl]\" value=\"{$xf.options.extraCaptchaKeys.altchajsurl}\" />\n\t</xf:dependent>\n\t<xf:dependent>\n\t\t<div>{{ phrase('roi_altchacaptcha_i18n_JS_URL:') }}</div>\n\t\t<xf:textbox name=\"{$extraKeysInput}[altchai18njsurl]\" value=\"{$xf.options.extraCaptchaKeys.altchai18njsurl}\" />\n\t</xf:dependent>\n</xf:option>\n\n<!--[XF:captcha_after_altchacaptcha]-->"
-}
