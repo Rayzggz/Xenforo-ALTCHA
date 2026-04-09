@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace AltchaOrg\Altcha\Hasher;
+namespace AltchaOrg\Altcha\V1\Hasher;
 
 class Hasher implements HasherInterface
 {

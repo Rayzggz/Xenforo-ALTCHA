@@ -1,21 +1,21 @@
 # ALTCHA PHP Library
 
-The ALTCHA PHP Library is a lightweight, zero-dependency library designed for creating and verifying [ALTCHA](https://altcha.org) challenges, specifically tailored for PHP applications.
+A lightweight PHP library for creating and verifying [ALTCHA](https://altcha.org) challenges using key derivation functions (PBKDF2, Argon2id, Scrypt).
 
 ## Compatibility
 
-This library is compatible with:
+- PHP 8.2+
 
-- PHP 8.2+ (use version v0.x.x for older PHP version)
-- All major platforms (Linux, Windows, macOS)
+## Migrating from V1 to V2
+
+- [`MIGRATION-v1.md`](/MIGRATION-v1.md)
 
 ## Example
 
-- [Demo server](https://github.com/altcha-org/altcha-starter-php)
+- [Basic Server](/examples/server.php)
+- [Server Signature](/examples/server_verify.php)
 
 ## Installation
-
-To install the ALTCHA PHP Library, use the following command:
 
 ```sh
 composer require altcha-org/altcha
@@ -23,119 +23,237 @@ composer require altcha-org/altcha
 
 ## Usage
 
-Here’s a basic example of how to use the ALTCHA PHP Library:
-
 ```php
 <?php
 
 require 'vendor/autoload.php';
 
-use AltchaOrg\Altcha\ChallengeOptions;
 use AltchaOrg\Altcha\Altcha;
+use AltchaOrg\Altcha\CreateChallengeOptions;
+use AltchaOrg\Altcha\SolveChallengeOptions;
+use AltchaOrg\Altcha\VerifySolutionOptions;
+use AltchaOrg\Altcha\Payload;
+use AltchaOrg\Altcha\Algorithm\Pbkdf2;
 
-$altcha = new Altcha('secret hmac key');
-
-// Create a new challenge
-$options = new ChallengeOptions(
-    maxNumber: 50000, // the maximum random number
-    expires: (new \DateTimeImmutable())->add(new \DateInterval('PT10S')),
+$pbkdf2 = new Pbkdf2();
+$altcha = new Altcha(
+    hmacSignatureSecret: 'secret',
+    hmacKeySignatureSecret: 'key-secret', // optional, enables fast verification path
 );
 
-$challenge = $altcha->createChallenge($options);
-echo "Challenge created: " . json_encode($challenge) . "\n";
+// Create a new challenge
+// Modify the cost and counter depending on the algorithm
+$challenge = $altcha->createChallenge(new CreateChallengeOptions(
+    algorithm: $pbkdf2,
+    cost: 5000,
+    counter: random_int(5000, 10000),
+    expiresAt: time() + 600,
+));
 
-// Example payload to verify
-$payload = [
-    'algorithm' => $challenge->algorithm,
-    'challenge' => $challenge->challenge,
-    'number'    => 12345, // Example number
-    'salt'      => $challenge->salt,
-    'signature' => $challenge->signature,
-];
+// Solve the challenge (client-side in production)
+$solution = $altcha->solveChallenge(new SolveChallengeOptions(
+    algorithm: $pbkdf2,
+    challenge: $challenge,
+));
 
-// Verify the solution
-$ok = $altcha->verifySolution($payload, true);
+// Verify the solution (server-side)
+if ($solution !== null) {
+    $payload = new Payload($challenge, $solution);
+    $result = $altcha->verifySolution(new VerifySolutionOptions(
+        algorithm: $pbkdf2,
+        payload: $payload,
+    ));
 
-if ($ok) {
-    echo "Solution verified!\n";
-} else {
-    echo "Invalid solution.\n";
+    if ($result->verified) {
+        echo "Solution verified!\n";
+    }
 }
 ```
 
 ## API
 
-### `Altcha::createChallenge(ChallengeOptions $options): Challenge`
-
-Creates a new challenge for ALTCHA.
-
-**Returns:** `Challenge`
-
-#### `ChallengeOptions`
+### `Altcha`
 
 ```php
-$options = new ChallengeOptions(
-    algorithm: Algorithm::SHA256,
-    maxNumber: BaseChallengeOptions::DEFAULT_MAX_NUMBER,
-    expires: (new \DateTimeImmutable())->add(new \DateInterval('PT10S')),
-    params: ['query_param' => '123'],
-    saltLength: 12
+$altcha = new Altcha(
+    hmacSignatureSecret: 'secret',
+    hmacKeySignatureSecret: 'key-secret', // enables fast verification path
+    hmacAlgorithm: HmacAlgorithm::SHA256, // default
 );
 ```
 
-### `Altcha::verifySolution(array|string $payload, bool $checkExpires): bool`
+### `Altcha::createChallenge(CreateChallengeOptions $options): Challenge`
 
-Verifies an ALTCHA solution.
+Creates a new challenge.
 
-**Parameters:**
+#### `CreateChallengeOptions`
 
-- `data array|string`: The solution payload to verify.
-- `checkExpires bool`: Whether to check if the challenge has expired.
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `algorithm` | `DeriveKeyInterface` | required | Key derivation algorithm |
+| `cost` | `int` | required | Iterations/time cost |
+| `counter` | `?int` | `null` | Counter for deterministic mode |
+| `data` | `?array` | `null` | Custom metadata |
+| `expiresAt` | `?int` | `null` | Unix timestamp for expiration |
+| `keyLength` | `int` | `32` | Derived key length in bytes |
+| `keyPrefixLength` | `int` | `keyLength / 2` | Key prefix length in bytes |
+| `memoryCost` | `?int` | `null` | Memory cost (Argon2id/Scrypt) |
+| `nonce` | `?string` | `null` | Custom nonce (hex) |
+| `parallelism` | `?int` | `null` | Parallelism factor (Scrypt) |
+| `salt` | `?string` | `null` | Custom salt (hex) |
 
-**Returns:** `bool`
+When `counter` is provided and `hmacKeySignatureSecret` is set, the challenge includes a `keySignature` for fast verification (skips re-derivation).
 
-### `Altcha::verifyFieldsHash(array $formData, array $fields, string $fieldsHash, Algorithm $algorithm): bool`
+**Returns:** `Challenge` with `parameters` (`ChallengeParameters`) and `signature`.
 
-Verifies the hash of form fields.
+### `Altcha::solveChallenge(SolveChallengeOptions $options): ?Solution`
 
-**Parameters:**
+Iterates counter values to find a derived key matching the challenge prefix.
 
-- `formData array`: The form data to hash.
-- `fields array`: The fields to include in the hash.
-- `fieldsHash string`: The expected hash value.
-- `algorithm string`: Hashing algorithm (`SHA-1`, `SHA-256`, `SHA-512`).
+#### `SolveChallengeOptions`
 
-**Returns:** `bool`
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `algorithm` | `DeriveKeyInterface` | required | Key derivation algorithm |
+| `challenge` | `Challenge` | required | The challenge to solve |
+| `start` | `int` | `0` | Initial counter value |
+| `step` | `int` | `1` | Counter increment per iteration |
+| `timeout` | `float` | `30.0` | Timeout in seconds |
 
-### `Altcha::verifyServerSignature(array|string $payload): ServerSignatureVerification`
+**Returns:** `Solution` with `counter`, `derivedKey` (hex), and `time` (seconds). Returns `null` if no match is found.
 
-Verifies the server signature.
+### `Altcha::verifySolution(VerifySolutionOptions $options): VerifySolutionResult`
 
-**Parameters:**
+Verifies a solution against its challenge.
 
-- `data array|string`: The payload to verify (string or `ServerSignaturePayload` array).
+#### `VerifySolutionOptions`
 
-**Returns:** `ServerSignatureVerification`
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `algorithm` | `DeriveKeyInterface` | required | Key derivation algorithm |
+| `payload` | `Payload` | required | Challenge + solution pair |
 
-### `Altcha::solveChallenge(string $challenge, string $salt, Algorithm $algorithm, int $max, int $start = 0): array`
+#### `VerifySolutionResult`
 
-Finds a solution to the given challenge.
+| Property | Type | Description |
+|---|---|---|
+| `verified` | `bool` | Whether the solution is valid |
+| `expired` | `bool` | Whether the challenge has expired |
+| `invalidSignature` | `?bool` | Whether the challenge signature is invalid |
+| `invalidSolution` | `?bool` | Whether the derived key doesn't match |
+| `time` | `float` | Verification time in seconds |
 
-**Parameters:**
+### Key Derivation Algorithms
 
-- `challenge string`: The challenge hash.
-- `salt string`: The challenge salt.
-- `algorithm string`: Hashing algorithm (`SHA-1`, `SHA-256`, `SHA-512`).
-- `max int`: Maximum number to iterate to.
-- `start int`: Starting number.
+All algorithms implement `DeriveKeyInterface`.
 
-**Returns:** `null|Solution`
+#### PBKDF2
 
+```php
+use AltchaOrg\Altcha\Algorithm\Pbkdf2;
+use AltchaOrg\Altcha\HmacAlgorithm;
+
+new Pbkdf2();                        // PBKDF2/SHA-256
+new Pbkdf2(HmacAlgorithm::SHA384);  // PBKDF2/SHA-384
+new Pbkdf2(HmacAlgorithm::SHA512);  // PBKDF2/SHA-512
+```
+
+#### Argon2id
+
+Requires `ext-sodium` (typically bundled with PHP).
+
+```php
+use AltchaOrg\Altcha\Algorithm\Argon2id;
+
+new Argon2id();
+```
+
+Uses `memoryCost` from challenge options.
+
+#### Scrypt
+
+Requires `ext-scrypt` ([php-scrypt](https://github.com/DomBlack/php-scrypt)).
+
+```php
+use AltchaOrg\Altcha\Algorithm\Scrypt;
+
+new Scrypt();
+```
+
+Uses `memoryCost` (r, default: 8) and `parallelism` (p, default: 1) from challenge options.
+
+### `HmacAlgorithm`
+
+Enum used for HMAC signing and PBKDF2 hash selection:
+
+- `HmacAlgorithm::SHA256` - `SHA-256`
+- `HmacAlgorithm::SHA384` - `SHA-384`
+- `HmacAlgorithm::SHA512` - `SHA-512`
+
+### `ServerSignature::verifyServerSignature(string|array $data, string $hmacKey, HmacAlgorithm $hmacAlgorithm = HmacAlgorithm::SHA256): ServerSignatureVerification`
+
+Verifies a server signature payload.
+
+#### `ServerSignatureVerification`
+
+| Property | Type | Description |
+|---|---|---|
+| `verified` | `bool` | Whether the signature is valid, not expired, and solution verified |
+| `expired` | `bool` | Whether the verification data has expired |
+| `invalidSignature` | `bool` | Whether the HMAC signature is invalid |
+| `invalidSolution` | `bool` | Whether the solution was not verified |
+| `time` | `float` | Verification time in seconds |
+| `verificationData` | `?ServerSignatureVerificationData` | Parsed verification data |
+
+Verification data is parsed generically from URL-encoded params with auto-detected types (`bool`, `int`, `float`, `string`, `array` for `fields`/`reasons`). Access values via property or array syntax:
+
+```php
+use AltchaOrg\Altcha\ServerSignature;
+
+$result = ServerSignature::verifyServerSignature($payload, 'server-secret');
+
+if ($result->verified) {
+    $result->verificationData->expire;          // int
+    $result->verificationData->score;           // float
+    $result->verificationData->verified;        // bool
+    $result->verificationData->fields;          // array
+    $result->verificationData->classification;  // string
+    $result->verificationData['email'];         // array access also works
+}
+```
+
+### `ServerSignature::verifyFieldsHash(array $formData, array $fields, string $fieldsHash, HmacAlgorithm $hmacAlgorithm = HmacAlgorithm::SHA256): bool`
+
+Verifies the hash of specific form fields.
+
+```php
+$isValid = ServerSignature::verifyFieldsHash(
+    formData: ['name' => 'John', 'email' => 'john@example.com'],
+    fields: ['name', 'email'],
+    fieldsHash: hash('sha256', "John\njohn@example.com"),
+);
+```
+
+### `Payload`
+
+Wraps a `Challenge` and `Solution` pair for verification and serialization.
+
+```php
+$payload = new Payload($challenge, $solution);
+
+$payload->toArray();   // array
+$payload->toJson();    // JSON string
+$payload->toBase64();  // base64-encoded JSON
+```
+
+## V1 API
+
+The V1 API is available under the `AltchaOrg\Altcha\V1` namespace. It uses simple hash-based challenges (SHA-1, SHA-256, SHA-512) instead of key derivation functions.
 
 ## Tests
 
 ```sh
-vendor/bin/phpunit --bootstrap src/Altcha.php tests/AltchaTest.php
+vendor/bin/phpunit tests
 ```
 
 ## License

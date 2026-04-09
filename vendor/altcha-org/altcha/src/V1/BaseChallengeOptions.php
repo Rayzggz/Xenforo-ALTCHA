@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace AltchaOrg\Altcha;
+namespace AltchaOrg\Altcha\V1;
 
-use AltchaOrg\Altcha\Hasher\Algorithm;
+use AltchaOrg\Altcha\V1\Hasher\Algorithm;
 
 /**
  * @phpstan-type ChallengeParams array<string, null|scalar>
@@ -36,6 +36,11 @@ class BaseChallengeOptions
 
         if (!empty($params)) {
             $salt .= '?' . http_build_query($params);
+        }
+
+        // Add a delimiter to prevent parameter splicing
+        if (!str_ends_with($salt, '&')) {
+            $salt .= '&';
         }
 
         $this->salt = $salt;

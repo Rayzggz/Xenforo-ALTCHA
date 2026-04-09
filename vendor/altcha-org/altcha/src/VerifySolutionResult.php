@@ -4,14 +4,13 @@ declare(strict_types=1);
 
 namespace AltchaOrg\Altcha;
 
-class ServerSignatureVerification
+class VerifySolutionResult
 {
     public function __construct(
         public readonly bool $verified,
-        public readonly ?ServerSignatureVerificationData $verificationData,
         public readonly bool $expired = false,
-        public readonly bool $invalidSignature = false,
-        public readonly bool $invalidSolution = false,
+        public readonly ?bool $invalidSignature = null,
+        public readonly ?bool $invalidSolution = null,
         public readonly float $time = 0.0,
     ) {
     }

@@ -4,248 +4,192 @@ declare(strict_types=1);
 
 namespace AltchaOrg\Altcha;
 
-use AltchaOrg\Altcha\Hasher\Algorithm;
-use AltchaOrg\Altcha\Hasher\Hasher;
-use AltchaOrg\Altcha\Hasher\HasherInterface;
+use AltchaOrg\Altcha\Algorithm\DeriveKeyInterface;
 
 class Altcha
 {
-    /**
-     * @param string $hmacKey Required HMAC key for challenge calculation and solution verification.
-     */
     public function __construct(
-        #[\SensitiveParameter] private readonly string $hmacKey,
-        private readonly HasherInterface $hasher = new Hasher(),
+        #[\SensitiveParameter]
+        private readonly ?string $hmacSignatureSecret = null,
+        #[\SensitiveParameter]
+        private readonly ?string $hmacKeySignatureSecret = null,
+        private readonly HmacAlgorithm $hmacAlgorithm = HmacAlgorithm::SHA256,
     ) {
     }
 
-    /**
-     * @return null|array<array-key, mixed>
-     */
-    private function decodePayload(string $payload): ?array
+    public function createChallenge(CreateChallengeOptions $options): Challenge
     {
-        $decoded = base64_decode($payload, true);
+        $nonce = $options->nonce ?? bin2hex(random_bytes(16));
+        $salt = $options->salt ?? bin2hex(random_bytes(16));
 
-        if (!$decoded) {
-            return null;
-        }
+        $params = new ChallengeParameters(
+            algorithm: $options->algorithm->getAlgorithmName(),
+            nonce: $nonce,
+            salt: $salt,
+            cost: $options->cost,
+            keyLength: $options->keyLength,
+            keyPrefix: $options->keyPrefix,
+            memoryCost: $options->memoryCost,
+            parallelism: $options->parallelism,
+            expiresAt: $options->expiresAt,
+            data: $options->data,
+        );
 
-        try {
-            $data = json_decode($decoded, true, 2, \JSON_THROW_ON_ERROR);
-        } catch (\JsonException|\ValueError) {
-            return null;
-        }
+        $keyPrefix = $params->keyPrefix;
+        $keySignature = null;
+        $keyPrefixLength = $options->keyPrefixLength ?? $params->keyLength / 2;
 
-        if (!\is_array($data) || empty($data)) {
-            return null;
-        }
-
-        return $data;
-    }
-
-    /**
-     * @param array<array-key, mixed>|string $data
-     */
-    private function verifyAndBuildSolutionPayload(string|array $data): ?Payload
-    {
-        if (\is_string($data)) {
-            $data = $this->decodePayload($data);
-        }
-
-        if (null === $data
-            || !isset($data['algorithm'], $data['challenge'], $data['number'], $data['salt'], $data['signature'])
-            || !\is_string($data['algorithm'])
-            || !\is_string($data['challenge'])
-            || !\is_int($data['number'])
-            || !\is_string($data['salt'])
-            || !\is_string($data['signature'])
-        ) {
-            return null;
-        }
-
-        $algorithm = Algorithm::tryFrom($data['algorithm']);
-
-        if (!$algorithm) {
-            return null;
-        }
-
-        return new Payload($algorithm, $data['challenge'], $data['number'], $data['salt'], $data['signature']);
-    }
-
-    /**
-     * @param array<array-key, mixed>|string $data
-     */
-    private function verifyAndBuildServerSignaturePayload(string|array $data): ?ServerSignaturePayload
-    {
-        if (\is_string($data)) {
-            $data = $this->decodePayload($data);
-        }
-
-        if (null === $data
-            || !isset($data['algorithm'], $data['verificationData'], $data['signature'], $data['verified'])
-            || !\is_string($data['algorithm'])
-            || !\is_string($data['verificationData'])
-            || !\is_string($data['signature'])
-            || !\is_bool($data['verified'])
-        ) {
-            return null;
-        }
-
-        $algorithm = Algorithm::tryFrom($data['algorithm']);
-
-        if (!$algorithm) {
-            return null;
-        }
-
-        return new ServerSignaturePayload($algorithm, $data['verificationData'], $data['signature'], $data['verified']);
-    }
-
-    /**
-     * Creates a new challenge for ALTCHA.
-     *
-     * @return Challenge The challenge data to be passed to ALTCHA.
-     */
-    public function createChallenge(BaseChallengeOptions $options = new ChallengeOptions()): Challenge
-    {
-        $challenge = $this->hasher->hashHex($options->algorithm, $options->salt . $options->number);
-        $signature = $this->hasher->hashHmacHex($options->algorithm, $challenge, $this->hmacKey);
-
-        return new Challenge($options->algorithm->value, $challenge, $options->maxNumber, $options->salt, $signature);
-    }
-
-    /**
-     * Verifies an ALTCHA solution.
-     *
-     * @param array<array-key, mixed>|string $data         The solution payload to verify.
-     * @param bool                           $checkExpires Whether to check if the challenge has expired.
-     *
-     * @return bool True if the solution is valid.
-     */
-    public function verifySolution(string|array $data, bool $checkExpires = true): bool
-    {
-        $payload = $this->verifyAndBuildSolutionPayload($data);
-
-        if (!$payload) {
-            return false;
-        }
-
-        $params = $this->extractParams($payload);
-        if ($checkExpires && isset($params['expires']) && is_numeric($params['expires'])) {
-            $expireTime = (int) $params['expires'];
-            if (time() > $expireTime) {
-                return false;
+        if (null !== $options->counter) {
+            $result = $this->deriveKeyForCounter($options->algorithm, $params, $options->counter);
+            $keyPrefix = bin2hex(substr($result, 0, $keyPrefixLength));
+            if (null !== $this->hmacKeySignatureSecret) {
+                $keySignature = $this->hmacHex(bin2hex($result), $this->hmacKeySignatureSecret);
             }
+        } elseif (empty($keyPrefix)) {
+            // Generate a random prefix of the desired hex length
+            $keyPrefix = bin2hex(random_bytes(max(1, (int) $keyPrefixLength)));
         }
 
-        $challengeOptions = new CheckChallengeOptions(
-            $payload->algorithm,
-            $payload->salt,
-            $payload->number
+        $params = new ChallengeParameters(
+            algorithm: $params->algorithm,
+            nonce: $params->nonce,
+            salt: $params->salt,
+            cost: $params->cost,
+            keyLength: $params->keyLength,
+            keyPrefix: $keyPrefix,
+            keySignature: $keySignature,
+            memoryCost: $params->memoryCost,
+            parallelism: $params->parallelism,
+            expiresAt: $params->expiresAt,
+            data: $params->data,
         );
 
-        $expectedChallenge = $this->createChallenge($challengeOptions);
+        $signature = $this->hmacSignatureSecret
+            ? $this->hmacHex($params->toCanonicalJson(), $this->hmacSignatureSecret)
+            : null;
 
-        return $expectedChallenge->challenge === $payload->challenge
-            && $expectedChallenge->signature === $payload->signature;
+        return new Challenge($params, $signature);
     }
 
-    /**
-     * @return array<array-key, array<array-key, mixed>|string>
-     */
-    private function extractParams(Payload $payload): array
+    public function solveChallenge(SolveChallengeOptions $options): ?Solution
     {
-        $saltParts = explode('?', $payload->salt);
-        if (\count($saltParts) > 1) {
-            parse_str($saltParts[1], $params);
+        $params = $options->challenge->parameters;
+        $nonceBytes = hex2bin($params->nonce) ?: '';
+        $saltBytes = hex2bin($params->salt) ?: '';
+        $keyPrefixBytes = hex2bin($params->keyPrefix) ?: '';
+        $keyPrefixLen = \strlen($keyPrefixBytes);
 
-            return $params;
-        }
-
-        return [];
-    }
-
-    /**
-     * Verifies the hash of form fields.
-     *
-     * @param array<array-key, mixed> $formData   The form data to hash.
-     * @param array<array-key, mixed> $fields     The fields to include in the hash.
-     * @param string                  $fieldsHash The expected hash value.
-     * @param Algorithm               $algorithm  Hashing algorithm (`SHA-1`, `SHA-256`, `SHA-512`).
-     */
-    public function verifyFieldsHash(array $formData, array $fields, string $fieldsHash, Algorithm $algorithm): bool
-    {
-        $lines = [];
-        foreach ($fields as $field) {
-            $lines[] = $formData[$field] ?? '';
-        }
-        $joinedData = implode("\n", $lines);
-        $computedHash = $this->hasher->hashHex($algorithm, $joinedData);
-
-        return $computedHash === $fieldsHash;
-    }
-
-    /**
-     * Verifies the server signature.
-     *
-     * @param array<array-key, mixed>|string $data The payload to verify (string or `ServerSignaturePayload` array).
-     */
-    public function verifyServerSignature(string|array $data): ServerSignatureVerification
-    {
-        $payload = $this->verifyAndBuildServerSignaturePayload($data);
-
-        if (!$payload) {
-            return new ServerSignatureVerification(false, null);
-        }
-
-        $hash = $this->hasher->hash($payload->algorithm, $payload->verificationData);
-        $expectedSignature = $this->hasher->hashHmacHex($payload->algorithm, $hash, $this->hmacKey);
-
-        parse_str($payload->verificationData, $params);
-
-        $verificationData = new ServerSignatureVerificationData(
-            classification: isset($params['classification']) && \is_string($params['classification']) ? $params['classification'] : '',
-            country: isset($params['country']) && \is_string($params['country']) ? $params['country'] : '',
-            detectedLanguage: isset($params['detectedLanguage']) && \is_string($params['detectedLanguage']) ? $params['detectedLanguage'] : '',
-            email: isset($params['email']) && \is_string($params['email']) ? $params['email'] : '',
-            expire: isset($params['expire']) && is_numeric($params['expire']) ? (int) $params['expire'] : 0,
-            fields: isset($params['fields']) && \is_array($params['fields']) ? $params['fields'] : [],
-            fieldsHash: isset($params['fieldsHash']) && \is_string($params['fieldsHash']) ? $params['fieldsHash'] : '',
-            reasons: isset($params['reasons']) && \is_array($params['reasons']) ? $params['reasons'] : [],
-            score: isset($params['score']) && is_numeric($params['score']) ? (float) $params['score'] : 0.0,
-            time: isset($params['time']) && is_numeric($params['time']) ? (int) $params['time'] : 0,
-            verified: isset($params['verified']) && $params['verified'],
-        );
-
-        $now = time();
-        $isVerified = $payload->verified && $verificationData->verified
-            && $verificationData->expire > $now
-            && $payload->signature === $expectedSignature;
-
-        return new ServerSignatureVerification($isVerified, $verificationData);
-    }
-
-    /**
-     * Finds a solution to the given challenge.
-     *
-     * @param string    $challenge The challenge hash.
-     * @param string    $salt      The challenge salt.
-     * @param Algorithm $algorithm Hashing algorithm.
-     * @param int       $max       Maximum number to iterate to.
-     * @param int       $start     Starting number.
-     */
-    public function solveChallenge(string $challenge, string $salt, Algorithm $algorithm, int $max, int $start = 0): ?Solution
-    {
         $startTime = microtime(true);
+        $deadline = $startTime + $options->timeout;
+        $i = 0;
 
-        for ($n = $start; $n <= $max; $n++) {
-            $hash = $this->hasher->hashHex($algorithm, $salt . $n);
-            if ($hash === $challenge) {
-                $took = microtime(true) - $startTime;
+        while (microtime(true) < $deadline) {
+            $counter = $options->start + ($i * $options->step);
+            $password = $nonceBytes . pack('N', $counter);
 
-                return new Solution($n, $took);
+            $result = $options->algorithm->deriveKey($params, $saltBytes, $password);
+            $derivedKey = $result->derivedKey;
+
+            if (substr($derivedKey, 0, $keyPrefixLen) === $keyPrefixBytes) {
+                $time = microtime(true) - $startTime;
+
+                return new Solution($counter, bin2hex($derivedKey), $time);
             }
+
+            $i++;
         }
 
         return null;
+    }
+
+    public function verifySolution(VerifySolutionOptions $options): VerifySolutionResult
+    {
+        $startTime = microtime(true);
+        $payload = $options->payload;
+        $params = $payload->challenge->parameters;
+
+        // Check expiration
+        if (null !== $params->expiresAt) {
+            if (time() > $params->expiresAt) {
+                return new VerifySolutionResult(
+                    verified: false,
+                    expired: true,
+                    time: microtime(true) - $startTime,
+                );
+            }
+        }
+
+        // Verify challenge signature
+        if (null !== $payload->challenge->signature && null !== $this->hmacSignatureSecret) {
+            $expectedSignature = $this->hmacHex($params->toCanonicalJson(), $this->hmacSignatureSecret);
+            if (!hash_equals($expectedSignature, $payload->challenge->signature)) {
+                return new VerifySolutionResult(
+                    verified: false,
+                    invalidSignature: true,
+                    time: microtime(true) - $startTime,
+                );
+            }
+        }
+
+        // Verify solution: fast path via keySignature, or full re-derivation
+        if (null !== $params->keySignature && null !== $this->hmacKeySignatureSecret) {
+            // Fast path: verify the HMAC of the submitted derived key
+            $expectedKeySignature = $this->hmacHex($payload->solution->derivedKey, $this->hmacKeySignatureSecret);
+            if (hash_equals($expectedKeySignature, $params->keySignature)) {
+                return new VerifySolutionResult(
+                    verified: true,
+                    time: microtime(true) - $startTime,
+                );
+            }
+        }
+
+        // Full re-derivation path
+        $nonceBytes = hex2bin($params->nonce) ?: '';
+        $saltBytes = hex2bin($params->salt) ?: '';
+        $password = $nonceBytes . pack('N', $payload->solution->counter);
+
+        $result = $options->algorithm->deriveKey($params, $saltBytes, $password);
+        $derivedKeyHex = bin2hex($result->derivedKey);
+
+        if (!hash_equals($derivedKeyHex, $payload->solution->derivedKey)) {
+            return new VerifySolutionResult(
+                verified: false,
+                invalidSolution: true,
+                time: microtime(true) - $startTime,
+            );
+        }
+
+        // Verify the derived key starts with the required prefix
+        $keyPrefixBytes = hex2bin($params->keyPrefix) ?: '';
+        $keyPrefixLen = \strlen($keyPrefixBytes);
+
+        if (substr($result->derivedKey, 0, $keyPrefixLen) !== $keyPrefixBytes) {
+            return new VerifySolutionResult(
+                verified: false,
+                invalidSolution: true,
+                time: microtime(true) - $startTime,
+            );
+        }
+
+        return new VerifySolutionResult(
+            verified: true,
+            time: microtime(true) - $startTime,
+        );
+    }
+
+    private function deriveKeyForCounter(DeriveKeyInterface $algorithm, ChallengeParameters $params, int $counter): string
+    {
+        $nonceBytes = hex2bin($params->nonce) ?: '';
+        $saltBytes = hex2bin($params->salt) ?: '';
+        $password = $nonceBytes . pack('N', $counter);
+
+        $result = $algorithm->deriveKey($params, $saltBytes, $password);
+
+        return $result->derivedKey;
+    }
+
+    private function hmacHex(string $data, string $key): string
+    {
+        return bin2hex(hash_hmac($this->hmacAlgorithm->hashAlgo(), $data, $key, true));
     }
 }

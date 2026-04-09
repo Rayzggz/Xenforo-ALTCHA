@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace AltchaOrg\Altcha;
+namespace AltchaOrg\Altcha\V1;
 
-use AltchaOrg\Altcha\Hasher\Algorithm;
+use AltchaOrg\Altcha\V1\Hasher\Algorithm;
 
 class CheckChallengeOptions extends BaseChallengeOptions
 {

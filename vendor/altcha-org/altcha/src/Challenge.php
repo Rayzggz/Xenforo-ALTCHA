@@ -7,11 +7,26 @@ namespace AltchaOrg\Altcha;
 class Challenge
 {
     public function __construct(
-        public readonly string $algorithm,
-        public readonly string $challenge,
-        public readonly int $maxNumber,
-        public readonly string $salt,
-        public readonly string $signature,
+        public readonly ChallengeParameters $parameters,
+        public readonly ?string $signature = null,
     ) {
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function toArray(): array
+    {
+        $arr = ['parameters' => $this->parameters->toArray()];
+        if (null !== $this->signature) {
+            $arr['signature'] = $this->signature;
+        }
+
+        return $arr;
+    }
+
+    public function toJson(): string
+    {
+        return json_encode($this->toArray(), \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE) ?: '';
     }
 }
