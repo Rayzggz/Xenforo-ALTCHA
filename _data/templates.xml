@@ -8,7 +8,7 @@
 </xf:if>
 <altcha-widget
                 id="altcha-captcha-widget"
-            challengejson='{$challenge}'
+            challenge='{$challenge}'
             auto="onload"
             hidefooter
             hidelogo
