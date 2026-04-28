@@ -1,2 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
-<options/>
+<options>
+  <option option_id="roi_altchacaptcha_cdn_i18n_js" edit_format="textbox" data_type="string" advanced="0">
+    <default_value></default_value>
+    <relation group_id="roi_altchacaptcha" display_order="101"/>
+  </option>
+  <option option_id="roi_altchacaptcha_cdn_widget_js" edit_format="textbox" data_type="string" advanced="0">
+    <default_value></default_value>
+    <relation group_id="roi_altchacaptcha" display_order="100"/>
+  </option>
+  <option option_id="roi_altchacaptcha_setting_cost" edit_format="textbox" data_type="integer" advanced="0">
+    <default_value>50000</default_value>
+    <relation group_id="roi_altchacaptcha" display_order="200"/>
+  </option>
+  <option option_id="roi_altchacaptcha_style_hideFooter" edit_format="onoff" data_type="boolean" advanced="0">
+    <default_value>0</default_value>
+    <relation group_id="roi_altchacaptcha" display_order="3"/>
+  </option>
+  <option option_id="roi_altchacaptcha_style_hideLogo" edit_format="onoff" data_type="boolean" advanced="0">
+    <default_value>0</default_value>
+    <relation group_id="roi_altchacaptcha" display_order="2"/>
+  </option>
+  <option option_id="roi_altchacaptcha_style_type" edit_format="textbox" data_type="string" advanced="0">
+    <default_value>checkbox</default_value>
+    <relation group_id="roi_altchacaptcha" display_order="1"/>
+  </option>
+</options>

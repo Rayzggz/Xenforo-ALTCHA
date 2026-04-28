@@ -25,30 +25,47 @@ class ALTCHACAPTCHA extends AbstractCaptcha
      */
     protected $altchaHmacKey = null;
 
-    protected $altchajsurl = "https://cdn.jsdelivr.net/gh/altcha-org/altcha@v3.0.0/dist/main/altcha.min.js";
+    protected $altchajsurl = "https://cdn.jsdelivr.net/gh/altcha-org/altcha@v3.0.2/dist/main/altcha.min.js";
 
     protected $altchai18njsurl = null;
 
     protected $altchaCost = 50000;
+
+    protected $hideLogo = 'false';
+
+    protected $hideFooter = 'false';
+
+    protected $styleType = 'checkbox';
+
     public function __construct(App $app)
     {
         parent::__construct($app);
-        $extraKeys = $app->options()->extraCaptchaKeys;
+        $options = $app->options();
+        $extraKeys = $options->extraCaptchaKeys;
         if (!empty($extraKeys['altchaHmacKey']))
         {
             $this->altchaHmacKey = $extraKeys['altchaHmacKey'];
         }
 
-        if (!empty($extraKeys['altchajsurl'])) {
-            $this->altchajsurl = $extraKeys['altchajsurl'];
+        if (!empty($options->roi_altchacaptcha_cdn_widget_js)) {
+            $this->altchajsurl = $options->roi_altchacaptcha_cdn_widget_js;
         }
 
-        if (!empty($extraKeys['altchaCost'])) {
-            $this->altchaCost = $extraKeys['altchaCost'];
+        if (!empty($options->roi_altchacaptcha_setting_cost)) {
+            $this->altchaCost = $options->roi_altchacaptcha_setting_cost;
         }
 
-        if (!empty($extraKeys['altchai18njsurl'])) {
-            $this->altchai18njsurl = $extraKeys['altchai18njsurl'];
+        if (!empty($options->roi_altchacaptcha_cdn_i18n_js)) {
+            $this->altchai18njsurl = $options->roi_altchacaptcha_cdn_i18n_js;
+        }
+
+        $this->hideLogo = $options->roi_altchacaptcha_style_hideLogo ? 'true' : 'false';
+
+        $this->hideFooter = $options->roi_altchacaptcha_style_hideFooter ? 'true' : 'false';
+
+
+        if (!empty($options->roi_altchacaptcha_style_type)) {
+            $this->styleType = $options->roi_altchacaptcha_style_type;
         }
     }
 
@@ -77,9 +94,11 @@ class ALTCHACAPTCHA extends AbstractCaptcha
 
 
         return $templater->renderTemplate('public:roi_altchacaptcha_captcha', [
+            'type' => $this->styleType,
             'altchajsurl' => $this->altchajsurl,
             'altchai18njsurl' => $this->altchai18njsurl,
             'challenge' => $challenge,
+            'configuration' => $this->buildConfig(),
         ]);
     }
 
@@ -133,6 +152,11 @@ class ALTCHACAPTCHA extends AbstractCaptcha
             \XF::logException($e, false, 'ALTCHA CAPTCHA error: ');
             return true;
         }
+    }
+
+    private function buildConfig()
+    {
+        return '{"hideFooter":' . $this->hideFooter . ',"hideLogo":' . $this->hideLogo .'}';
     }
 
 }

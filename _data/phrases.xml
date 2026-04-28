@@ -1,9 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <phrases>
+  <phrase title="option.roi_altchacaptcha_cdn_i18n_js" version_id="2000070" version_string="2.0.0"><![CDATA[Internationalization JS URL]]></phrase>
+  <phrase title="option.roi_altchacaptcha_cdn_widget_js" version_id="2000070" version_string="2.0.0"><![CDATA[Self-Hosted Widget JS URL]]></phrase>
+  <phrase title="option.roi_altchacaptcha_setting_cost" version_id="2000070" version_string="2.0.0"><![CDATA[Cost]]></phrase>
+  <phrase title="option.roi_altchacaptcha_style_hideFooter" version_id="2000070" version_string="2.0.0"><![CDATA[Hides the “ALTCHA” attribution link]]></phrase>
+  <phrase title="option.roi_altchacaptcha_style_hideLogo" version_id="2000070" version_string="2.0.0"><![CDATA[Hides the ALTCHA logo icon]]></phrase>
+  <phrase title="option.roi_altchacaptcha_style_type" version_id="2000070" version_string="2.0.0"><![CDATA[Checkbox & Switch]]></phrase>
+  <phrase title="option_explain.roi_altchacaptcha_cdn_i18n_js" version_id="2000070" version_string="2.0.0"><![CDATA[<a href="https://altcha.org/docs/v2/internationalization-i18n/" target="_blank">View Documentation</a>]]></phrase>
+  <phrase title="option_explain.roi_altchacaptcha_cdn_widget_js" version_id="2000070" version_string="2.0.0"><![CDATA[If you want to provide Widget JS from your own server input the link where.
+Offical URL: https://cdn.jsdelivr.net/gh/altcha-org/altcha@v3.0.2/dist/main/altcha.min.js]]></phrase>
+  <phrase title="option_explain.roi_altchacaptcha_setting_cost" version_id="2000070" version_string="2.0.0"><![CDATA[The primary complexity factor for the KDF<br>
+The larger the number, the more computing the client needs to perform proof of work.<br>
+<a href="https://playground.altcha.org/#/about:~:text=Configuring%20Complexity
+" target="_blank">View Documentation</a>]]></phrase>
+  <phrase title="option_explain.roi_altchacaptcha_style_hideFooter" version_id="2000070" version_string="2.0.0"><![CDATA[Select to enable]]></phrase>
+  <phrase title="option_explain.roi_altchacaptcha_style_hideLogo" version_id="2000070" version_string="2.0.0"><![CDATA[Select to enable]]></phrase>
+  <phrase title="option_explain.roi_altchacaptcha_style_type" version_id="2000070" version_string="2.0.0"><![CDATA[<a href="https://altcha.org/docs/v2/widget-customization/#checkbox--switch" target="_blank">View Documentation</a>]]></phrase>
+  <phrase title="option_group.roi_altchacaptcha" version_id="2000070" version_string="2.0.0"><![CDATA[[Roi] ALTCHA CAPTCHA]]></phrase>
+  <phrase title="option_group_description.roi_altchacaptcha" version_id="2000070" version_string="2.0.0"><![CDATA[Configuration for ALTCHA CAPTCHA.]]></phrase>
   <phrase title="roi_altchacaptcha_JS_URL" version_id="1000070" version_string="1.0.0"><![CDATA[ALTCHA Script URL]]></phrase>
-  <phrase title="roi_altchacaptcha_config_hint" version_id="1000070" version_string="1.0.0"><![CDATA[<a href="https://altcha.org/" target="_blank">https://altcha.org/</a><br /> 
-The ALTCHA Script URL is optional, and the default uses the official jsdelivr URL. <br />
-Complexity is the maximum random number. For details, please refer to the official documentation.
+  <phrase title="roi_altchacaptcha_config_hint" version_id="2000070" version_string="2.0.0"><![CDATA[<a href="https://altcha.org/" target="_blank">https://altcha.org/</a><br /> 
+Private Secret Key: Your ALTCHA private secret key. This key used to HMAC sign the verification requests. Make sure to keep it secure and do not share it publicly.
+For advanced settings, Setup -> Options -> [Roi] ALTCHA CAPTCHA
  ]]></phrase>
   <phrase title="roi_altchacaptcha_cost" version_id="1010070" version_string="1.1.0"><![CDATA[Cost]]></phrase>
   <phrase title="roi_altchacaptcha_i18n_JS_URL" version_id="1000070" version_string="1.0.0"><![CDATA[i18n JS URL]]></phrase>

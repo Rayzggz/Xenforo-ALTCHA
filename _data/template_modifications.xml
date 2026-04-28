@@ -11,18 +11,6 @@
 		<div>{{ phrase('secret_key:') }}</div>
 		<xf:textbox name="{$extraKeysInput}[altchaHmacKey]" value="{$xf.options.extraCaptchaKeys.altchaHmacKey}" />
 	</xf:dependent>
-	<xf:dependent>
-		<div>{{ phrase('roi_altchacaptcha_cost:') }}</div>
-		<xf:textbox name="{$extraKeysInput}[altchaCost]" value="{$xf.options.extraCaptchaKeys.altchaCost}" />
-	</xf:dependent>
-	<xf:dependent>
-		<div>{{ phrase('roi_altchacaptcha_JS_URL:') }}</div>
-		<xf:textbox name="{$extraKeysInput}[altchajsurl]" value="{$xf.options.extraCaptchaKeys.altchajsurl}" />
-	</xf:dependent>
-	<xf:dependent>
-		<div>{{ phrase('roi_altchacaptcha_i18n_JS_URL:') }}</div>
-		<xf:textbox name="{$extraKeysInput}[altchai18njsurl]" value="{$xf.options.extraCaptchaKeys.altchai18njsurl}" />
-	</xf:dependent>
 </xf:option>
 
 <!--[XF:captcha_after_altchacaptcha]-->]]></replace>
