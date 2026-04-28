@@ -19,13 +19,9 @@ Admin Control Panel -> Setup -> Options -> User registration -> Enable CAPTCHA f
 
 Private Secret Key: Your ALTCHA private secret key. This key used to HMAC sign the verification requests. Make sure to keep it secure and do not share it publicly.
 
-Complexity: A numeric value that determines the difficulty of the challenges presented to users. Higher values increase security but may impact user experience.
+Advanced Options:
 
-ALTCHA Script URL: The URL of the ALTCHA JavaScript file to be included on pages where verification is required. Default is `https://cdn.jsdelivr.net/gh/altcha-org/altcha/dist/altcha.min.js`.
-See [ALTCHA Documentation](https://altcha.org/docs/v2/complexity/) for more details.
-
-i18n JS URL: The URL of the ALTCHA internationalization JavaScript file to support multiple languages.
-See [ALTCHA Documentation](https://altcha.org/docs/v2/widget-integration/#internationalization-i18n) for more details.
+Admin Control Panel -> Setup -> Options -> [Roi] ALTCHA CAPTCHA
 
 # 🧰 Compatibility
 
