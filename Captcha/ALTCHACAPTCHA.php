@@ -111,8 +111,50 @@ class ALTCHACAPTCHA extends AbstractCaptcha
 
         $request = $this->app->request();
 
-        $captchaResponse = $request->filter('altcha', 'str');
-        if (!$captchaResponse)
+        $rawCaptchaResponse = $request->filter('altcha', 'str');
+        if (!$rawCaptchaResponse)
+        {
+            return false;
+        }
+
+        $decoded = base64_decode($rawCaptchaResponse, true);
+        if ($decoded === false)
+        {
+            return false;
+        }
+
+        try
+        {
+            $captchaResponse = json_decode($decoded, true, 512, JSON_THROW_ON_ERROR);
+        }
+        catch (\JsonException $e)
+        {
+            return false;
+        }
+
+        if (!is_array($captchaResponse))
+        {
+            return false;
+        }
+
+        if (
+            !isset(
+                $captchaResponse['challenge']['parameters'],
+                $captchaResponse['challenge']['signature'],
+                $captchaResponse['solution']['counter'],
+                $captchaResponse['solution']['derivedKey'],
+                $captchaResponse['solution']['time']
+            )
+        )
+        {
+            return false;
+        }
+
+        if (
+            !is_array($captchaResponse['challenge']['parameters'])
+            || !is_string($captchaResponse['challenge']['signature'])
+            || !is_string($captchaResponse['solution']['derivedKey'])
+        )
         {
             return false;
         }
@@ -124,7 +166,6 @@ class ALTCHACAPTCHA extends AbstractCaptcha
             //hmacKeySignatureSecret: 'key-secret', //TODO
             );
 
-            $captchaResponse = json_decode(base64_decode($captchaResponse), true);
             $pbkdf2 = new Pbkdf2();
 
             $challengeParam =  ChallengeParameters::fromArray($captchaResponse['challenge']['parameters']);
@@ -140,8 +181,6 @@ class ALTCHACAPTCHA extends AbstractCaptcha
                 algorithm: $pbkdf2,
             ));
 
-            var_dump($result);
-
             return $result->verified && !$result->expired;
 
 
@@ -156,7 +195,10 @@ class ALTCHACAPTCHA extends AbstractCaptcha
 
     private function buildConfig()
     {
-        return '{"hideFooter":' . $this->hideFooter . ',"hideLogo":' . $this->hideLogo .'}';
+        return json_encode([
+            'hideFooter' => $this->hideFooter === 'true',
+            'hideLogo' => $this->hideLogo === 'true',
+        ], JSON_UNESCAPED_SLASHES);
     }
 
 }
